@@ -51,7 +51,7 @@ export default {
       moveNum: false, //线条颜色
       color: "", //线条颜色
       lineWidth: "", //线条粗细
-      canvasLineArray: [],
+      canvasLineArray: [],//全部笔迹
       canvasLineOne: [],
       canvasLine: {},
       point_x: [],
@@ -61,15 +61,11 @@ export default {
   },
   created() {
     this.number = Number(this.number);
-    // this.$nextTick(() => {
-    //   //dom渲染后调用
-    //   if(sessionStorage.getItem("lineArray")){
-    //     let a= [];
-    //      a = sessionStorage.getItem("lineArray");
-    //     console.log(a)
-    //     this.canvasLineArray = a;
-    //   }
-    // });
+    this.$nextTick(() => {
+      //dom渲染后调用
+    this.canvasLineArray = this.$store.state.lineArray; //vuex存过的笔记
+    this.showLine(this.number)  //页面初始化显示已有笔记
+    });
   },
   mounted() {
     this.canvasdraw();
@@ -83,12 +79,6 @@ export default {
       //画笔橡皮擦切换
       this.draw = !this.draw;
     },
-    // rangechange: function() {
-    //   //这是改变画笔粗细的函数
-    //   this.$refs["line"].innerText = this.$refs["linevalue"].value; //span标签里的值即为range标签里选择的大小
-    //   //requestAnimationFrame(this.rangechange); //span标签里的数字随着range的改变而改变，这是递归
-    //   //告诉浏览器——你希望执行一个动画，并且要求浏览器在下次重绘之前调用指定的回调函数更新动画。该方法需要传入一个回调函数作为参数，该回调函数会在浏览器下一次重绘之前执行
-    // },
     mouseDown: function(e) {
       //鼠标在画布上按下
       e = e || event; //解决兼容问题
@@ -185,6 +175,10 @@ export default {
       }
       //sessionStorage.setItem("lineArray",this.canvasLineArray);
       console.log(this.canvasLineArray);
+      this.$store.commit({           //vuex 调用改变state值函数
+        type : 'newlineArray', //函数名
+        canvaslineArray : this.canvasLineArray,
+      })
       this.canvasLineOne = [];
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     },
@@ -195,7 +189,7 @@ export default {
       linepage = this.canvasLineArray[page];
       if (linepage != undefined) {
         for (let k = 0; k < linepage.length; k++) {
-          if (linepage[k].flag == true) {
+          if (linepage[k].flag == true) {//判断是画笔还是橡皮擦/画笔
             this.ctx.beginPath(); //起笔
             this.ctx.lineWidth = linepage[k].lineWidth; //线条的粗细
             this.ctx.strokeStyle = linepage[k].color; //将颜色的值赋给线条样式
@@ -205,12 +199,12 @@ export default {
               this.ctx.lineTo(lineX[j], lineY[j]); //添加一个新点，然后在画布中创建从该点到最后指定点的线条
               this.ctx.stroke(); //采用线性的方式绘画
             }
-          } else {
+          } else {//橡皮擦
             let lineWidth = linepage[k].lineWidth;
             let lineX = linepage[k].x;
             let lineY = linepage[k].y;
             for (let j = 0; j < lineX.length; j++) {              
-              this.generatePixel(lineX[j], lineY[j], lineWidth);
+              this.generatePixel(lineX[j], lineY[j], lineWidth);//调用橡皮擦函数
             }
           }
         }
